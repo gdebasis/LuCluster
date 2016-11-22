@@ -124,7 +124,9 @@ public final class ClusterEvaluator {
                 if (clusterCardinalities[k]*classCardinalities[j] == 0)
                     continue;
                 p_cluster_class = clusterClassMatrix[k][j]/(float)numDocs;
-                log_component = (float)(Math.log((numDocs*clusterClassMatrix[k][j])/(float)(clusterCardinalities[k]*classCardinalities[j])));                 
+                if(clusterClassMatrix[k][j] == 0)
+                    continue;
+                log_component = (float)(Math.log((numDocs*clusterClassMatrix[k][j])/(float)(clusterCardinalities[k]*classCardinalities[j])));               
                 i_w_c += p_cluster_class * log_component;
             }
         }
@@ -134,6 +136,7 @@ public final class ClusterEvaluator {
             h_w += p_w_k * Math.log(p_w_k);
         }
         h_w = -h_w;
+        
         
         for (int j=0; j < J; j++) {            
             float p_c_j = classCardinalities[j]/(float)numDocs;

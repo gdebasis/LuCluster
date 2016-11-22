@@ -86,6 +86,7 @@ public class KMeansClusterer extends LuceneClusterer {
             if (clusterId != centroidId)
                 continue;
 
+            
             TermVector docVec = TermVector.extractAllDocTerms(reader, i, contentFieldName, lambda);
             newCentroidVec = TermVector.add(newCentroidVec, docVec);
         }
