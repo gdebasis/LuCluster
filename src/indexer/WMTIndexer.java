@@ -130,7 +130,7 @@ public class WMTIndexer {
                 continue; // index only English documents
                         
             String decodedContent = decodeBase64(tokens[5]);
-            doc = constructDoc(tokens[3], String.valueOf(domainId), decodedContent);
+            doc = constructDoc(tokens[3], String.valueOf(domainId), decodedContent, 0);
             writer.addDocument(doc);
         }
         
@@ -147,12 +147,11 @@ public class WMTIndexer {
         return decodedStr;
     }
     
-    Document constructDoc(String id, String domainName, String content) throws Exception {
+    static public Document constructDoc(String id, String domainName, String content, int clusterId) throws Exception {
         Document doc = new Document();
         doc.add(new Field(FIELD_URL, id, Field.Store.YES, Field.Index.NOT_ANALYZED));
-        doc.add(new Field(FIELD_DOMAIN_ID, domainName, Field.Store.YES, Field.Index.NOT_ANALYZED));        
-        doc.add(new StoredField(FIELD_CLUSTER_ID, 0));
-
+        doc.add(new Field(FIELD_DOMAIN_ID, domainName, Field.Store.YES, Field.Index.NOT_ANALYZED));
+        
         // For the 1st pass, use a standard analyzer to write out
         // the words (also store the term vector)
         doc.add(new Field(FIELD_ANALYZED_CONTENT, content,

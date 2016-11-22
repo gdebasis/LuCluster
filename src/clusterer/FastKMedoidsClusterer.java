@@ -126,9 +126,9 @@ public class FastKMedoidsClusterer extends LuceneClusterer {
     
     // Returns true if the cluster id is changed...
     @Override
-    boolean assignClusterId(IndexWriter writer, int docId, String url, int clusterId) throws Exception {
+    boolean assignClusterId(int docId, int clusterId) throws Exception {
         rdes[clusterId].addDocId(docId);        
-        return super.assignClusterId(writer, docId, url, clusterId);
+        return super.assignClusterId(docId, clusterId);
     }
         
     @Override
@@ -157,6 +157,14 @@ public class FastKMedoidsClusterer extends LuceneClusterer {
         try {
             LuceneClusterer fkmc = new FastKMedoidsClusterer(args[0]);
             fkmc.cluster();
+            
+            boolean eval = Boolean.parseBoolean(fkmc.getProperties().getProperty("eval", "false"));
+            if (eval) {
+                ClusterEvaluator ceval = new ClusterEvaluator(args[0]);
+                System.out.println("Purity: " + ceval.computePurity());
+                System.out.println("NMI: " + ceval.computeNMI());            
+                System.out.println("RI: " + ceval.computeRandIndex());            
+            }
         }
         catch (Exception ex) {
             ex.printStackTrace();

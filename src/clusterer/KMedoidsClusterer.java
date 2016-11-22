@@ -58,6 +58,14 @@ public class KMedoidsClusterer extends KMeansClusterer {
         try {
             LuceneClusterer fkmc = new KMedoidsClusterer(args[0]);
             fkmc.cluster();
+            
+            boolean eval = Boolean.parseBoolean(fkmc.getProperties().getProperty("eval", "false"));
+            if (eval) {
+                ClusterEvaluator ceval = new ClusterEvaluator(args[0]);
+                System.out.println("Purity: " + ceval.computePurity());
+                System.out.println("NMI: " + ceval.computeNMI());            
+                System.out.println("RI: " + ceval.computeRandIndex());            
+            }
         }
         catch (Exception ex) {
             ex.printStackTrace();
