@@ -121,24 +121,29 @@ public final class ClusterEvaluator {
         
         for (int k=0; k < K; k++) {            
             for (int j=0; j < J; j++) {
-                if (clusterCardinalities[k]*classCardinalities[j] == 0)
+                
+                if (clusterCardinalities[k] == 0 || classCardinalities[j] == 0)
                     continue;
-                p_cluster_class = clusterClassMatrix[k][j]/(float)numDocs;
                 if(clusterClassMatrix[k][j] == 0)
                     continue;
+                
+                p_cluster_class = clusterClassMatrix[k][j]/(float)numDocs;
                 log_component = (float)(Math.log((numDocs*clusterClassMatrix[k][j])/(float)(clusterCardinalities[k]*classCardinalities[j])));               
                 i_w_c += p_cluster_class * log_component;
             }
         }
         
-        for (int k=0; k < K; k++) {            
+        for (int k=0; k < K; k++) {
+            if (clusterCardinalities[k] == 0)
+                continue;
             float p_w_k = clusterCardinalities[k]/(float)numDocs;
             h_w += p_w_k * Math.log(p_w_k);
         }
         h_w = -h_w;
-        
-        
+                
         for (int j=0; j < J; j++) {            
+            if (classCardinalities[j] == 0)
+                continue;
             float p_c_j = classCardinalities[j]/(float)numDocs;
             h_c += p_c_j * Math.log(p_c_j);
         }
