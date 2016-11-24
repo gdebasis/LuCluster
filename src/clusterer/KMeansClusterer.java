@@ -50,12 +50,18 @@ public class KMeansClusterer extends LuceneClusterer {
     @Override
     int getClosestCluster(int docId) throws Exception {
         TermVector docVec = TermVector.extractAllDocTerms(reader, docId, contentFieldName, lambda);
+		if (docVec == null) {
+        	System.out.println("Skipping cluster assignment for empty doc: " + docId);
+			return (int)(Math.random()*K);
+        }
+
         float maxSim = 0, sim = 0;
         int mostSimClusterId = 0;
         int clusterId = 0;
         
         for (TermVector centroidVec : centroidVecs) {
             sim = docVec.cosineSim(centroidVec);
+
             if (sim > maxSim) {
                 maxSim = sim;
                 mostSimClusterId = clusterId;
@@ -106,7 +112,7 @@ public class KMeansClusterer extends LuceneClusterer {
         if (args.length == 0) {
             args = new String[1];
             System.out.println("Usage: java KMeansClusterer <prop-file>");
-            args[0] = "init.properties";
+            args[0] = "C:/Users/PROCHETA/Downloads/LuCluster-master/LuCluster-master/src/clusterer/init.properties";
         }
         
         try {

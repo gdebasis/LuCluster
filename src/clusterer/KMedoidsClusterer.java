@@ -28,6 +28,11 @@ public class KMedoidsClusterer extends KMeansClusterer {
                 continue;
 
             TermVector docVec = TermVector.extractAllDocTerms(reader, i, contentFieldName, lambda);
+			if (docVec == null) {
+        		System.out.println("Skipping cluster assignment for empty doc: " + i);
+				continue;
+        	}
+
             sim = docVec.cosineSim(centroidVec);
             if (sim > maxSim) {
                 maxSim = sim;
