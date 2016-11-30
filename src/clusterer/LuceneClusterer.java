@@ -53,12 +53,17 @@ public abstract class LuceneClusterer {
         
         resetAllClusterIds();
         initCentroids();
-        
-        int maxIters = Integer.parseInt(prop.getProperty("maxiters", "20"));
+
+       	int i;
+		long currentTime;
+        int maxIters = Integer.parseInt(prop.getProperty("maxiters", "100"));
+        int stepIters = Integer.parseInt(prop.getProperty("stepiters", "25"));
+		boolean stopOnThreshold = Boolean.parseBoolean(prop.getProperty("threshold.stop", "false"));
         float stopThreshold = Float.parseFloat(prop.getProperty("stopthreshold", "0.1"));
         float changeRatio;
-        
-        for (int i=1; i <= maxIters; i++) {
+      
+		long startTime =  System.currentTimeMillis();
+        for (i=1; i <= maxIters; i++) {
             System.out.println("Iteration : " + i);
             showCentroids();
             
@@ -66,14 +71,30 @@ public abstract class LuceneClusterer {
             changeRatio = assignClusterIds();
             
             System.out.println(changeRatio + " fraction of the documents reassigned different clusters...");
-            if (changeRatio < stopThreshold) {
+            if (stopOnThreshold && (changeRatio < stopThreshold)) {
                 System.out.println("Stopping after " + i + " iterations...");
                 break;
             }
-            recomputeCentroids();
+	    	saveClusterIds();    
+
+            if (i % stepIters == 0) {
+				currentTime = System.currentTimeMillis();
+
+				System.out.println("Time to finish " + i + " iterations (s): " + (currentTime - startTime)/1000);
+	      		ClusterEvaluator ceval = new ClusterEvaluator(prop);
+	      		System.out.println("Clustering Evaluation after " + stepIters + " iterations...");
+				System.out.println("Purity: " + ceval.computePurity());
+				System.out.println("NMI: " + ceval.computeNMI());
+				System.out.println("RI: " + ceval.computeRandIndex());
+	      }
+		
+			recomputeCentroids();
         }
-        saveClusterIds();
-        reader.close();
+
+		currentTime = System.currentTimeMillis();
+		System.out.println("Time to finish " + i + " iterations (s): " + (currentTime - startTime)/1000);
+
+		reader.close();
     }
     
     void saveClusterIds() throws Exception {

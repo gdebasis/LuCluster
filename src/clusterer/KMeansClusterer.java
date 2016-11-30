@@ -84,10 +84,8 @@ public class KMeansClusterer extends LuceneClusterer {
     TermVector computeCentroid(int centroidId) throws Exception {
         TermVector centroidVec = TermVector.extractAllDocTerms(reader, centroidId, contentFieldName, lambda);
         TermVector newCentroidVec = new TermVector(centroidVec.termStatsList);
-        for (int i=0; i < numDocs; i++) {
-            if (i == centroidId)
-                continue;
 
+        for (int i=0; i < numDocs; i++) {
             int clusterId = getClusterId(i);
             if (clusterId != centroidId)
                 continue;
