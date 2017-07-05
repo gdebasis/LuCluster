@@ -29,6 +29,8 @@ public abstract class LuceneClusterer {
     int K;
     String contentFieldName;
     HashMap<Integer, Integer> clusterIdMap;
+    String idFieldName;
+    String refFieldName;
 
     public LuceneClusterer(String propFile) throws Exception {
         prop = new Properties();
@@ -40,6 +42,11 @@ public abstract class LuceneClusterer {
         numDocs = reader.numDocs();
         K = Integer.parseInt(prop.getProperty("numclusters", "200"));
         contentFieldName = prop.getProperty("content.field_name", WMTIndexer.FIELD_ANALYZED_CONTENT);        
+        idFieldName = prop.getProperty("id.field_name", WMTIndexer.FIELD_URL);        
+        refFieldName = prop.getProperty("ref.field_name", WMTIndexer.FIELD_DOMAIN_ID);
+        if (refFieldName.equals("none"))
+            refFieldName = null;
+        
         clusterIdMap = new HashMap<>();
     }
     
@@ -53,17 +60,12 @@ public abstract class LuceneClusterer {
         
         resetAllClusterIds();
         initCentroids();
-
-       	int i;
-		long currentTime;
-        int maxIters = Integer.parseInt(prop.getProperty("maxiters", "100"));
-        int stepIters = Integer.parseInt(prop.getProperty("stepiters", "25"));
-		boolean stopOnThreshold = Boolean.parseBoolean(prop.getProperty("threshold.stop", "false"));
+        
+        int maxIters = Integer.parseInt(prop.getProperty("maxiters", "20"));
         float stopThreshold = Float.parseFloat(prop.getProperty("stopthreshold", "0.1"));
         float changeRatio;
-      
-		long startTime =  System.currentTimeMillis();
-        for (i=1; i <= maxIters; i++) {
+        
+        for (int i=1; i <= maxIters; i++) {
             System.out.println("Iteration : " + i);
             showCentroids();
             
@@ -71,30 +73,14 @@ public abstract class LuceneClusterer {
             changeRatio = assignClusterIds();
             
             System.out.println(changeRatio + " fraction of the documents reassigned different clusters...");
-            if (stopOnThreshold && (changeRatio < stopThreshold)) {
+            if (changeRatio < stopThreshold) {
                 System.out.println("Stopping after " + i + " iterations...");
                 break;
             }
-	    	saveClusterIds();    
-
-            if (i % stepIters == 0) {
-				currentTime = System.currentTimeMillis();
-
-				System.out.println("Time to finish " + i + " iterations (s): " + (currentTime - startTime)/1000);
-	      		ClusterEvaluator ceval = new ClusterEvaluator(prop);
-	      		System.out.println("Clustering Evaluation after " + stepIters + " iterations...");
-				System.out.println("Purity: " + ceval.computePurity());
-				System.out.println("NMI: " + ceval.computeNMI());
-				System.out.println("RI: " + ceval.computeRandIndex());
-	      }
-		
-			recomputeCentroids();
+            recomputeCentroids();
         }
-
-		currentTime = System.currentTimeMillis();
-		System.out.println("Time to finish " + i + " iterations (s): " + (currentTime - startTime)/1000);
-
-		reader.close();
+        saveClusterIds();
+        reader.close();
     }
     
     void saveClusterIds() throws Exception {
@@ -142,7 +128,7 @@ public abstract class LuceneClusterer {
                 continue;
             
             Document d = reader.document(i);            
-            String thisUrl = d.get(WMTIndexer.FIELD_URL);
+            String thisUrl = d.get(idFieldName);
             int clusterId = getClosestCluster(i);
             if (assignClusterId(i, clusterId))
                 numChanged++;  // cluster id got changed

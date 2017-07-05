@@ -48,6 +48,7 @@ public class RelatedDocumentsRetriever {
     int clusterId;
     Document queryDoc;
     String contentFieldName;
+    String idFieldName;
     TopDocs relatedDocs;
     HashMap<Integer, ScoreDoc> docScoreMap;
     List<Integer> nonretrievedDocIds;  // doc-ids that were not retrieved but assigned to this cluster
@@ -63,6 +64,7 @@ public class RelatedDocumentsRetriever {
         this.prop = prop;
         this.clusterId = clusterId;
         this.contentFieldName = prop.getProperty("content.field_name", WMTIndexer.FIELD_ANALYZED_CONTENT);
+        this.idFieldName = prop.getProperty("id.field_name", WMTIndexer.FIELD_URL);
         qSelLambda = Float.parseFloat(prop.getProperty("lm.termsel.lambda", "0.6f"));
         this.queryDoc = reader.document(docId);
         nonretrievedDocIds = new ArrayList<>();
@@ -133,35 +135,41 @@ public class RelatedDocumentsRetriever {
         int numDocs = reader.numDocs();
         int start = (int)(Math.random()*numDocs), i;
         int end = numDocs;
-        
+
         for (i=start; i < end; i++) {
-            if (!docScoreMap.containsKey(i) && !centroidDocIds.containsKey(i))
+            if (docScoreMap!=null && !docScoreMap.containsKey(i) && !centroidDocIds.containsKey(i))
                 break;
+            else if (!centroidDocIds.containsKey(i))
+                break;
+                
             if (i==end-1) {
                 end = start;
                 i = 0;
             }
         }
         
-         // if nothing found, return a random one... else this document
+        // if nothing found, return a random one... else this document
         return end==start? start : i;
     } 
 
     Document constructDoc(int docId, int clusterId) throws Exception {
         
         Document indexedDoc = reader.document(docId);
-        String id = indexedDoc.get(FIELD_URL);
+        String id = indexedDoc.get(idFieldName);
         String domainName = indexedDoc.get(FIELD_DOMAIN_ID);
         String content = indexedDoc.get(FIELD_ANALYZED_CONTENT);
         
         Document doc = new Document();
-        doc.add(new Field(FIELD_URL, id, Field.Store.YES, Field.Index.NOT_ANALYZED));
-        doc.add(new Field(FIELD_DOMAIN_ID, domainName, Field.Store.YES, Field.Index.NOT_ANALYZED));
+        doc.add(new Field(idFieldName, id, Field.Store.YES, Field.Index.NOT_ANALYZED));
+        
+        if (domainName != null)
+            doc.add(new Field(FIELD_DOMAIN_ID, domainName, Field.Store.YES, Field.Index.NOT_ANALYZED));
+        
         doc.add(new Field(FIELD_CLUSTER_ID, String.valueOf(clusterId), Field.Store.YES, Field.Index.NOT_ANALYZED));
 
         // For the 1st pass, use a standard analyzer to write out
         // the words (also store the term vector)
-        doc.add(new Field(FIELD_ANALYZED_CONTENT, content,
+        doc.add(new Field(contentFieldName, content,
                 Field.Store.NO, Field.Index.ANALYZED, Field.TermVector.YES));
         
         return doc;
@@ -172,7 +180,7 @@ public class RelatedDocumentsRetriever {
         TermsEnum termsEnum;
         BytesRef term;
         
-        tfvector = reader.getTermVector(docId, WMTIndexer.FIELD_ANALYZED_CONTENT);
+        tfvector = reader.getTermVector(docId, contentFieldName);
         if (tfvector == null || tfvector.size() == 0)
             return 0;
         

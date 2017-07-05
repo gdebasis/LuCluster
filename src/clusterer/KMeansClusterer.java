@@ -77,15 +77,20 @@ public class KMeansClusterer extends LuceneClusterer {
         int i = 0;
         for (int docId : centroidDocIds.keySet()) {
             Document doc = reader.document(docId);
-            System.out.println("Centroid " + (i++) + ": " + doc.get(WMTIndexer.FIELD_DOMAIN_ID) + ", " + doc.get(WMTIndexer.FIELD_URL));
+            if (refFieldName==null)
+                System.out.println("Centroid " + (i++) + ": " + doc.get(idFieldName));
+            else
+                System.out.println("Centroid " + (i++) + ": " + doc.get(WMTIndexer.FIELD_DOMAIN_ID) + ", " + doc.get(idFieldName));
         }
     }
 
     TermVector computeCentroid(int centroidId) throws Exception {
         TermVector centroidVec = TermVector.extractAllDocTerms(reader, centroidId, contentFieldName, lambda);
         TermVector newCentroidVec = new TermVector(centroidVec.termStatsList);
-
         for (int i=0; i < numDocs; i++) {
+            if (i == centroidId)
+                continue;
+
             int clusterId = getClusterId(i);
             if (clusterId != centroidId)
                 continue;

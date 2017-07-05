@@ -10,13 +10,9 @@ package clusterer;
  * @author Debasis
  */
 public class KMedoidsClusterer extends KMeansClusterer {
-	boolean pseudoCentroid;
 
     public KMedoidsClusterer(String propFile) throws Exception {
         super(propFile);
-
-		// allowable value: pseudo and true
-		pseudoCentroid = prop.getProperty("kmedoids.mode", "pseudo").equals("pseudo");
     }
     
     TermVector getClosestPointToCentroid(TermVector centroidVec, int centroidId) throws Exception {
@@ -24,6 +20,8 @@ public class KMedoidsClusterer extends KMeansClusterer {
         int medoidDocId = 0;
         
         for (int i=0; i < numDocs; i++) {
+            if (i == centroidId)
+                continue;
 
             int clusterId = getClusterId(i);
             if (clusterId != centroidId)
@@ -43,44 +41,6 @@ public class KMedoidsClusterer extends KMeansClusterer {
         }
         return TermVector.extractAllDocTerms(reader, medoidDocId, contentFieldName, lambda);
     }
-
-    TermVector getMedoid(int centroidId) throws Exception {
-        float maxSim = 0, sim;
-        int medoidDocId = 0;
-        
-        for (int i=0; i < numDocs; i++) {
-			sim = 0;
-			if (getClusterId(i) != centroidId)
-				continue;
-
-        	for (int j=i+1; j < numDocs; j++) {
-				if (getClusterId(j) != centroidId)
-					continue;
-
-				// we are here only if cluster-id(i) == cluster-id(j) == centroidId
-        	    TermVector d_i = TermVector.extractAllDocTerms(reader, i, contentFieldName, lambda);
-				if (d_i == null) {
-        			System.out.println("Skipping cluster assignment for empty doc: " + i);
-					continue;
-    	    	}
-
-        	    TermVector d_j = TermVector.extractAllDocTerms(reader, j, contentFieldName, lambda);
-				if (d_j == null) {
-        			System.out.println("Skipping cluster assignment for empty doc: " + j);
-					continue;
-				}
-
-        	    sim += d_i.cosineSim(d_j);
-			}
-
-            if (sim > maxSim) {
-	        	maxSim = sim;
-    	    	medoidDocId = i;
-			}
-        }
-
-        return TermVector.extractAllDocTerms(reader, medoidDocId, contentFieldName, lambda);
-	}
         
     // Work with medoids... A medoid in this case is that point which is
     // closest to the centroid...
@@ -88,14 +48,8 @@ public class KMedoidsClusterer extends KMeansClusterer {
     void recomputeCentroids() throws Exception {        
         int k = 0;
         for (int centroidId : centroidDocIds.keySet()) {
-			if (pseudoCentroid) {
-	            TermVector centroidVec = computeCentroid(centroidId);            
-    	        centroidVecs[k++] = getClosestPointToCentroid(centroidVec, centroidId);
-			}
-			else {
-				// true medoid
-    	        centroidVecs[k++] = getMedoid(centroidId);
-			}
+            TermVector centroidVec = computeCentroid(centroidId);            
+            centroidVecs[k++] = getClosestPointToCentroid(centroidVec, centroidId);            
         }
     }
     

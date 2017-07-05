@@ -91,7 +91,7 @@ public class FastKMedoidsClusterer extends LuceneClusterer {
         int i = 0;
         for (RelatedDocumentsRetriever rde: rdes) {
             Document doc = rde.queryDoc;
-            System.out.println("Centroid " + (i++) + ": " + doc.get(WMTIndexer.FIELD_DOMAIN_ID) + ", " + doc.get(WMTIndexer.FIELD_URL));
+            System.out.println("Centroid " + (i++) + ": " + doc.get(WMTIndexer.FIELD_DOMAIN_ID) + ", " + doc.get(idFieldName));
         }
     }
     
@@ -109,6 +109,8 @@ public class FastKMedoidsClusterer extends LuceneClusterer {
         float maxScore = 0;
         int clusterId = 0;
         for (int i=0; i < K; i++) {
+            if (rdes[i].docScoreMap == null)
+                continue;
             ScoreDoc sd = rdes[i].docScoreMap.get(docId);
             if (sd != null) {
                 if (sd.score > maxScore) {
@@ -137,9 +139,9 @@ public class FastKMedoidsClusterer extends LuceneClusterer {
         for (int i=0; i < K; i++) {
             newCentroidDocId = rdes[i].recomputeCentroidDoc();
             if (rdes[i].docId != newCentroidDocId) {
-                String oldCentroidURL = rdes[i].queryDoc.get(WMTIndexer.FIELD_URL);
+                String oldCentroidURL = rdes[i].queryDoc.get(idFieldName);
                 rdes[i] = new RelatedDocumentsRetriever(reader, newCentroidDocId, prop, i);
-                String newCentroidURL = rdes[i].queryDoc.get(WMTIndexer.FIELD_URL);
+                String newCentroidURL = rdes[i].queryDoc.get(idFieldName);
                 System.out.println("Changed centroid document " + oldCentroidURL + " to " + newCentroidURL);
                 
                 rdes[i].getRelatedDocs(numDocs/K);
@@ -151,7 +153,7 @@ public class FastKMedoidsClusterer extends LuceneClusterer {
         if (args.length == 0) {
             args = new String[1];
             System.out.println("Usage: java FastKMedoidsClusterer <prop-file>");
-            args[0] = "init.properties";
+            args[0] = "tweets.properties";
         }
         
         try {
