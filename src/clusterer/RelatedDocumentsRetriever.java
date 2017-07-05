@@ -195,12 +195,13 @@ public class RelatedDocumentsRetriever {
     
     int recomputeCentroidDoc() throws Exception {
         int numNonRetrDocs = nonretrievedDocIds.size();
-        int[] docIds = new int[relatedDocs.scoreDocs.length + numNonRetrDocs];
+        int numRelatedDocs = relatedDocs==null? 0 : relatedDocs.scoreDocs.length;
+        int[] docIds = new int[numRelatedDocs + numNonRetrDocs];
         int i;
-        for (i=0; i< relatedDocs.scoreDocs.length; i++) {
+        for (i=0; i < numRelatedDocs; i++) {
             docIds[i] = relatedDocs.scoreDocs[i].doc;
         }
-        for (i=0; i< numNonRetrDocs; i++) {
+        for (i=0; i < numNonRetrDocs; i++) {
             docIds[relatedDocs.scoreDocs.length + i] = nonretrievedDocIds.get(i);
         }
         
