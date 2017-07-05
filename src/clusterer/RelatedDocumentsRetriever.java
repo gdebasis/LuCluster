@@ -202,7 +202,7 @@ public class RelatedDocumentsRetriever {
             docIds[i] = relatedDocs.scoreDocs[i].doc;
         }
         for (i=0; i < numNonRetrDocs; i++) {
-            docIds[relatedDocs.scoreDocs.length + i] = nonretrievedDocIds.get(i);
+            docIds[numRelatedDocs + i] = nonretrievedDocIds.get(i);
         }
         
         int mostCentralDocId = 0;
