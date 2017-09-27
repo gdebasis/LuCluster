@@ -213,7 +213,6 @@ public final class ClusterEvaluator {
     double computeRandIndex() {
         double tp_fp = countTP() + countTN();
         double tn_fn = countTPPlusFP() + countTNPlusFN();
-
         
         return tp_fp / tn_fn;
     }

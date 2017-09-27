@@ -39,6 +39,10 @@ public final class TermVector {
     public static TermVector extractAllDocTerms(IndexReader reader, int docId, String contentFieldName, float lambda) throws Exception {
         return extractDocTerms(reader, docId, contentFieldName, 1, lambda);
     }
+
+	public int getLen() throws Exception {
+		return termStatsList.size();
+	}
     
     public static TermVector extractDocTerms(IndexReader reader, int docId, String contentFieldName, float queryToDocRatio, float lambda) throws Exception {
         String termText;
@@ -64,6 +68,12 @@ public final class TermVector {
             docLen += tf;
         }
         
+        if (queryToDocRatio == 1) {
+            // if all terms are to be selected skip the weighting and the
+            // sorting steps.
+            return new TermVector(termStats);
+        }
+        
         for (TermStats ts : termStats) {
             ts.computeWeight(docLen, lambda);
         }
@@ -71,6 +81,8 @@ public final class TermVector {
         Collections.sort(termStats);
         int numTopTerms = (int)(queryToDocRatio*termStats.size());
         numTopTerms = Math.min(numTopTerms, MAX_NUM_QRY_TERMS);
+		if (numTopTerms == 0)
+			return null;
         
         return new TermVector(termStats.subList(0, numTopTerms));
     }

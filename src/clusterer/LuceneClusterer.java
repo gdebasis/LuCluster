@@ -58,6 +58,10 @@ public abstract class LuceneClusterer {
     
     public void cluster() throws Exception {
         
+		long gstart, gend, start, end;
+
+		gstart = System.currentTimeMillis();
+
         resetAllClusterIds();
         initCentroids();
         
@@ -66,6 +70,8 @@ public abstract class LuceneClusterer {
         float changeRatio;
         
         for (int i=1; i <= maxIters; i++) {
+	    	start = System.currentTimeMillis();
+
             System.out.println("Iteration : " + i);
             showCentroids();
             
@@ -73,22 +79,34 @@ public abstract class LuceneClusterer {
             changeRatio = assignClusterIds();
             
             System.out.println(changeRatio + " fraction of the documents reassigned different clusters...");
-            if (changeRatio < stopThreshold) {
-                System.out.println("Stopping after " + i + " iterations...");
-                break;
-            }
+            //if (changeRatio < stopThreshold) {
+            //    System.out.println("Stopping after " + i + " iterations...");
+            //    break;
+            //}
             recomputeCentroids();
+
+			end = System.currentTimeMillis();
+			System.out.println("Time to run till " + i + " iterations: " + (end-start)/1000 + " seconds");
+
+			//saveClusterIds(i);
         }
-        saveClusterIds();
+		gend = System.currentTimeMillis();
+		System.out.println("Time to cluster: " + (gend-gstart)/1000 + " seconds");
+
+        saveClusterIds(0);  // the global one
         reader.close();
     }
     
-    void saveClusterIds() throws Exception {
-        FileWriter fw = new FileWriter(prop.getProperty("cluster.idfile"));
+    void saveClusterIds(int iter) throws Exception {
+		String fileName = prop.getProperty("cluster.idfile");
+		if (iter > 0)
+			fileName += "." + iter;
+        FileWriter fw = new FileWriter(fileName);
         BufferedWriter bw = new BufferedWriter(fw);
         
         for (Map.Entry<Integer, Integer> e : clusterIdMap.entrySet()) {
-            bw.write(e.getKey() + "\t" + e.getValue() + "\n");
+            String docId = reader.document(e.getKey()).get(idFieldName);
+            bw.write(e.getKey() + "\t" + e.getValue() + "\t" + docId + "\n");
         }
         
         bw.close();

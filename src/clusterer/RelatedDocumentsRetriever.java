@@ -56,7 +56,7 @@ public class RelatedDocumentsRetriever {
     Properties prop;
 
     float qSelLambda;
-    static final float queryToDocRatio = 0.2f;
+    float queryToDocRatio;
         
     public RelatedDocumentsRetriever(IndexReader reader, int docId, Properties prop, int clusterId) throws IOException {
         this.reader = reader;
@@ -68,6 +68,7 @@ public class RelatedDocumentsRetriever {
         qSelLambda = Float.parseFloat(prop.getProperty("lm.termsel.lambda", "0.6f"));
         this.queryDoc = reader.document(docId);
         nonretrievedDocIds = new ArrayList<>();
+        queryToDocRatio = Float.parseFloat(prop.getProperty("termsel.ratio", "1")); // 1 <=> select all terms for query
     }
 
     TopDocs normalize(TopDocs topDocs) {
@@ -115,6 +116,9 @@ public class RelatedDocumentsRetriever {
         TermVector repTerms = TermVector.extractDocTerms(reader, docId, contentFieldName, queryToDocRatio, qSelLambda);
         if (repTerms == null)
             return null;
+
+	System.out.println("Selected " + repTerms.termStatsList.size() + " terms for query");
+
         for (TermStats ts : repTerms.termStatsList) {
             queryDocument.add(new TermQuery(new Term(contentFieldName, ts.term)), BooleanClause.Occur.SHOULD);
         }

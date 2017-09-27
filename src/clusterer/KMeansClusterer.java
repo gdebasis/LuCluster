@@ -36,10 +36,19 @@ public class KMeansClusterer extends LuceneClusterer {
             if (centroidDocIds.containsKey(selectedDoc))
                 continue;
             centroidDocIds.put(selectedDoc, null);
-            
-            centroidVecs[numClustersAssigned] = TermVector.extractAllDocTerms(reader, selectedDoc, contentFieldName, lambda);            
-            numClustersAssigned++;
+           
+			TermVector centroid = TermVector.extractAllDocTerms(reader, selectedDoc, contentFieldName, lambda);
+			if (centroid != null) {
+				System.out.println("Len of selected centroid " + numClustersAssigned + " = " + centroid.termStatsList.size());
+            	centroidVecs[numClustersAssigned++] = centroid;            
+			}
         }
+
+		System.out.println("Size of initial cluster centres....");
+		for (int i=0; i < numClustersAssigned; i++) {
+			TermVector cv = centroidVecs[i];
+			System.out.println("Len of center " + i + " = " + cv.termStatsList.size());
+		}
     }
     
     @Override
@@ -51,7 +60,7 @@ public class KMeansClusterer extends LuceneClusterer {
     int getClosestCluster(int docId) throws Exception {
         TermVector docVec = TermVector.extractAllDocTerms(reader, docId, contentFieldName, lambda);
 		if (docVec == null) {
-        	System.out.println("Skipping cluster assignment for empty doc: " + docId);
+        	//System.out.println("Skipping cluster assignment for empty doc: " + docId);
 			return (int)(Math.random()*K);
         }
 
@@ -60,6 +69,10 @@ public class KMeansClusterer extends LuceneClusterer {
         int clusterId = 0;
         
         for (TermVector centroidVec : centroidVecs) {
+			if (centroidVec == null) {
+        		//System.out.println("Skipping cluster assignment for empty doc: " + docId);
+				return (int)(Math.random()*K);
+        	}
             sim = docVec.cosineSim(centroidVec);
 
             if (sim > maxSim) {
@@ -86,7 +99,13 @@ public class KMeansClusterer extends LuceneClusterer {
 
     TermVector computeCentroid(int centroidId) throws Exception {
         TermVector centroidVec = TermVector.extractAllDocTerms(reader, centroidId, contentFieldName, lambda);
-        TermVector newCentroidVec = new TermVector(centroidVec.termStatsList);
+		TermVector newCentroidVec = null;
+
+		if (centroidVec==null || centroidVec.termStatsList == null)
+			newCentroidVec = new TermVector();
+		else
+        	newCentroidVec = new TermVector(centroidVec.termStatsList);
+
         for (int i=0; i < numDocs; i++) {
             if (i == centroidId)
                 continue;
@@ -94,7 +113,6 @@ public class KMeansClusterer extends LuceneClusterer {
             int clusterId = getClusterId(i);
             if (clusterId != centroidId)
                 continue;
-
             
             TermVector docVec = TermVector.extractAllDocTerms(reader, i, contentFieldName, lambda);
             newCentroidVec = TermVector.add(newCentroidVec, docVec);
@@ -115,7 +133,7 @@ public class KMeansClusterer extends LuceneClusterer {
         if (args.length == 0) {
             args = new String[1];
             System.out.println("Usage: java KMeansClusterer <prop-file>");
-            args[0] = "C:/Users/PROCHETA/Downloads/LuCluster-master/LuCluster-master/src/clusterer/init.properties";
+            args[0] = "init.properties";
         }
         
         try {
