@@ -69,7 +69,7 @@ public class FastKMedoidsClusterer extends LuceneClusterer {
     void initCentroids() throws Exception {
         int selectedDoc = (int)(Math.random()*numDocs);
         int numClusterCentresAssigned = 1;
-        HashMap<Integer, Byte> centroidDocIds = new HashMap<>();
+        centroidDocIds = new HashMap<>();
         
         do {
             RelatedDocumentsRetriever rde = new RelatedDocumentsRetriever(reader, selectedDoc, prop, numClusterCentresAssigned);

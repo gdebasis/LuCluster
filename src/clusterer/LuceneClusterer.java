@@ -31,6 +31,9 @@ public abstract class LuceneClusterer {
     HashMap<Integer, Integer> clusterIdMap;
     String idFieldName;
     String refFieldName;
+    HashMap<Integer, Byte> centroidDocIds;
+    TermVector[] centroidVecs;
+    float lambda;
 
     public LuceneClusterer(String propFile) throws Exception {
         prop = new Properties();
@@ -48,6 +51,9 @@ public abstract class LuceneClusterer {
             refFieldName = null;
         
         clusterIdMap = new HashMap<>();
+        centroidDocIds = new HashMap<>();
+        lambda = Float.parseFloat(prop.getProperty("lm.termsel.lambda", "0.6f"));        
+        centroidVecs = new TermVector[K];
     }
     
     abstract void initCentroids() throws Exception;

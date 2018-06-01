@@ -16,15 +16,9 @@ import org.apache.lucene.index.IndexWriter;
  */
 public class KMeansClusterer extends LuceneClusterer {
 
-    HashMap<Integer, Byte> centroidDocIds = new HashMap<>();
-    TermVector[] centroidVecs;
-    float lambda;
     
     public KMeansClusterer(String propFile) throws Exception {
         super(propFile);
-        centroidDocIds = new HashMap<>();
-        centroidVecs = new TermVector[K];
-        lambda = Float.parseFloat(prop.getProperty("lm.termsel.lambda", "0.6f"));        
     }
 
     @Override
